@@ -1,0 +1,128 @@
+{
+  "success": true,
+  "error": "",
+  "sheetName": "Cashbot Jan 2026",
+  "rowLen": 20,
+  "rows": [
+    {
+      "Date": "2026-01-01",
+      "Amount": -1000000,
+      "Description": "#hiburan  suami istri",
+      "Category": "-Hiburan"
+    },
+    {
+      "Date": "2026-01-01",
+      "Amount": -1000000,
+      "Description": "#gift  nenek oma",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-01",
+      "Amount": -1000000,
+      "Description": "nabung sekolah pio viv #nocat",
+      "Category": ""
+    },
+    {
+      "Date": "2026-01-03",
+      "Amount": -250000,
+      "Description": "belanja pio n buah titip oma",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-03",
+      "Amount": -92500,
+      "Description": "cctv #bukanbulanan",
+      "Category": "-Bukan Bulanan"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -30000,
+      "Description": "telor",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -20000,
+      "Description": "sendal putri #gift",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -10000,
+      "Description": "bur ijo #hiburan",
+      "Category": "-Hiburan"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -15000,
+      "Description": "ubi cilembu pio",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -15000,
+      "Description": "SARI ROTI TAWAR SPCL",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -9500,
+      "Description": "CHIMI KRP.UB JG.BK41 (Potongan voucher 900) #gift",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -14000,
+      "Description": "PRMINA YGR MLT MLK 8",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -14300,
+      "Description": "LEMONILO BROWNIES 35 #gift",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -5200,
+      "Description": "POP MIE PD.DWR AYM75 (Potongan voucher 700)",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -14900,
+      "Description": "HB GREEK YGR CLS 200 (Potongan voucher 3.000)",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -8900,
+      "Description": "CMORY UHT ALMND 250 #gift",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -3900,
+      "Description": "INDOMLK KID F.CRM115",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -20000,
+      "Description": "ELLE&VIRE STRWB 125G",
+      "Category": "-Belanja Serumah"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -11700,
+      "Description": "S/Q CHUNKY ALMOND 26 #gift",
+      "Category": "-Gift"
+    },
+    {
+      "Date": "2026-01-04",
+      "Amount": -300,
+      "Description": "IDM KTG PLSTK 1W BSR",
+      "Category": "-Belanja Serumah"
+    }
+  ]
+}

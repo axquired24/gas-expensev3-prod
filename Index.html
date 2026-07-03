@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #121212;
+        --box: #1e1e1e;
+        --border: #2a2a2a;
+        --text: #e6e6e6;
+        --muted: #9aa0a6;
+        --accent: #0a84ff;
+        --error: #ff6b6b;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: calc(56px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+      }
+      .box {
+        background: var(--box);
+        border: 1px solid var(--border);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+      }
+      .version-inline { font-size: 12px; color: var(--muted); margin-left: 8px; font-weight: normal; }
+      .category-sums { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+      .sum-item { background: #232323; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; display: flex; gap: 8px; align-items: center; font-size: 14px; }
+      .sum-item .label { color: var(--muted); }
+      .sum-item .value { font-weight: bold; }
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+      table { min-width: 560px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+      th, td { white-space: nowrap; padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+      th { background: #232323; color: var(--muted); }
+      th.amount, td.amount {
+        position: sticky;
+        left: 0;
+        background: var(--box);
+        z-index: 1;
+        text-align: right;
+        box-shadow: 1px 0 0 var(--border);
+      }
+      th.amount { background: #232323; }
+      .error-msg { color: var(--error); font-weight: bold; }
+      input[type="month"], select, button {
+        padding: 10px;
+        font-size: 14px;
+        min-height: 40px;
+        border-radius: 6px;
+        border: 1px solid #3a3a3a;
+        background: #2a2a2a;
+        color: var(--text);
+      }
+      button { background: var(--accent); color: #fff; border: none; cursor: pointer; }
+      button:hover { filter: brightness(1.1); }
+      button:disabled { background: #555; cursor: not-allowed; }
+
+      /* Top bar */
+      .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 48px;
+        padding: 0 calc(8px + env(safe-area-inset-right)) 0 calc(8px + env(safe-area-inset-left));
+        background: var(--box);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 20;
+      }
+      .top-bar .tabs { display: flex; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; }
+      .tab-btn {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+      .tab-btn.active { color: var(--text); border-color: var(--accent); }
+      .top-bar .right { display: flex; align-items: center; gap: 6px; }
+      .month-pill {
+        background: #2a2a2a;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .month-picker { position: absolute; right: 8px; top: 56px; z-index: 30; }
+      .refresh-btn { padding: 6px 10px; font-size: 13px; min-height: 0; }
+
+      /* Bottom bar */
+      .bottom-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+        background: var(--box);
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        z-index: 10;
+      }
+      .bottom-bar select { flex: 1; min-width: 0; }
+      @media (min-width: 600px) {
+        .box { padding: 20px; }
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "preact": "https://esm.sh/preact@10.23.1",
+          "preact/hooks": "https://esm.sh/preact@10.23.1/hooks",
+          "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import { render } from 'preact';
+      import { useState, useEffect } from 'preact/hooks';
+      import { html } from 'htm/preact';
+
+      const fetchSheet = (param) => new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .getDevSheet(param, Date.now());
+      });
+
+      const extractHashtags = (desc) => {
+        if (!desc) return [];
+        const matches = desc.match(/#[^\s#]+/g);
+        return matches || [];
+      };
+
+      const formatMonth = (m) => {
+        if (!m) return '';
+        const [y, mm] = m.split('-');
+        const date = new Date(Number(y), Number(mm) - 1, 1);
+        return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+      };
+
+      const _now = new Date();
+      const defaultMonth = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`;
+
+
+      function App() {
+        const [month, setMonth] = useState(defaultMonth);
+        const [tab, setTab] = useState('expenses');
+        const [category, setCategory] = useState('All');
+        const [utangFilter, setUtangFilter] = useState('all');
+        const [hashtagFilter, setHashtagFilter] = useState('All');
+        const [result, setResult] = useState(null);
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState(null);
+        const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+        const cat = (r) => (r.Category && r.Category.trim()) || 'No Category';
+
+        const load = async (m = month) => {
+          if (!m) {
+            setError('Please select a valid month and year.');
+            return;
+          }
+          setLoading(true);
+          setError(null);
+          setResult(null);
+          const param = m.replace('-', '');
+          try {
+            const response = await fetchSheet(param);
+            if (!response) throw new Error('Backend returned nothing.');
+            if (response.success === false || response.success === undefined) {
+              throw new Error((response.error && response.error.trim()) || 'Something went wrong');
+            }
+            setResult(response);
+          } catch (err) {
+            setError(err.message || 'System Error');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        useEffect(() => { load(); }, []);
+
+        const handleMonthChange = (e) => {
+          const v = e.target.value;
+          if (v) {
+            setMonth(v);
+            setShowMonthPicker(false);
+            load(v);
+          }
+        };
+
+        const handleRefresh = () => { load(); };
+
+        const categories = result
+          ? ['All', ...Array.from(new Set(result.rows.map(cat))).sort()]
+          : ['All'];
+
+        const hashtags = result
+          ? Array.from(new Set(result.rows.flatMap((r) => extractHashtags(r.Description)))).sort()
+          : [];
+
+        const categorySums = result
+          ? Object.entries(
+              result.rows.reduce((acc, r) => {
+                if (r.Amount < 0) {
+                  const c = cat(r);
+                  acc[c] = (acc[c] || 0) + r.Amount;
+                }
+                return acc;
+              }, {})
+            ).sort((a, b) => a[0].localeCompare(b[0]))
+          : [];
+
+        const utangSums = result
+          ? (() => {
+              const acc = { istri: 0, suami: 0 };
+              result.rows.forEach((r) => {
+                const desc = (r.Description || '').toLowerCase();
+                if (desc.includes('#utangistri')) acc.istri += r.Amount;
+                if (desc.includes('#utangsuami')) acc.suami += r.Amount;
+              });
+              return [['#utangistri', acc.istri], ['#utangsuami', acc.suami]];
+            })()
+          : [];
+
+        const hashtagSum = result && hashtagFilter !== 'All'
+          ? result.rows
+              .filter((r) => r.Amount < 0 && (r.Description || '').toLowerCase().includes(hashtagFilter.toLowerCase()))
+              .reduce((sum, r) => sum + r.Amount, 0)
+          : 0;
+
+        let filteredRows = [];
+        if (result) {
+          if (tab === 'expenses') {
+            filteredRows = category === 'All' ? result.rows : result.rows.filter((r) => cat(r) === category);
+          } else if (tab === 'utang') {
+            const rows = result.rows.filter((r) => (r.Description || '').toLowerCase().includes('#utang'));
+            if (utangFilter === 'istri') {
+              filteredRows = rows.filter((r) => (r.Description || '').toLowerCase().includes('#utangistri'));
+            } else if (utangFilter === 'suami') {
+              filteredRows = rows.filter((r) => (r.Description || '').toLowerCase().includes('#utangsuami'));
+            } else {
+              filteredRows = rows;
+            }
+          } else if (tab === 'hashtag') {
+            if (hashtagFilter === 'All') {
+              filteredRows = result.rows.filter((r) => extractHashtags(r.Description).length > 0);
+            } else {
+              filteredRows = result.rows.filter((r) =>
+                (r.Description || '').toLowerCase().includes(hashtagFilter.toLowerCase())
+              );
+            }
+          }
+        }
+
+        const formatAmount = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+
+        return html`
+          <div class="top-bar">
+            <div class="tabs">
+              <button class=${`tab-btn ${tab === 'expenses' ? 'active' : ''}`} onClick=${() => setTab('expenses')}>Expenses</button>
+              <button class=${`tab-btn ${tab === 'utang' ? 'active' : ''}`} onClick=${() => setTab('utang')}>Utang</button>
+              <button class=${`tab-btn ${tab === 'hashtag' ? 'active' : ''}`} onClick=${() => setTab('hashtag')}>Hashtag</button>
+            </div>
+            <div class="right">
+              <button class="month-pill" onClick=${() => setShowMonthPicker((s) => !s)}>${formatMonth(month)}</button>
+              <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
+            </div>
+          </div>
+          ${showMonthPicker && html`
+            <input
+              class="month-picker"
+              type="month"
+              value=${month}
+              onChange=${handleMonthChange}
+            />
+          `}
+          <div class="box">
+            <h2>Web App Dashboard <span class="version-inline">v1.0.5</span></h2>
+            ${error && html`<span class="error-msg">Error: ${error}</span>`}
+            ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
+            ${result && html`
+              <p><strong>Sheet Target:</strong> ${result.sheetName}</p>
+              <p>Loaded ${result.rowLen} | Showing ${filteredRows.length}</p>
+              ${tab === 'expenses' && html`
+                <div class="category-sums">
+                  ${categorySums.map(([label, value]) => html`
+                    <div class="sum-item">
+                      <span class="label">${label}</span>
+                      <span class="value">${formatAmount(value)}</span>
+                    </div>
+                  `)}
+                </div>
+              `}
+              ${tab === 'utang' && html`
+                <div class="category-sums">
+                  ${utangSums.map(([label, value]) => html`
+                    <div class="sum-item">
+                      <span class="label">${label}</span>
+                      <span class="value">${formatAmount(value)}</span>
+                    </div>
+                  `)}
+                </div>
+              `}
+              ${tab === 'hashtag' && hashtagFilter !== 'All' && html`
+                <div class="category-sums">
+                  <div class="sum-item">
+                    <span class="label">${hashtagFilter}</span>
+                    <span class="value">${formatAmount(hashtagSum)}</span>
+                  </div>
+                </div>
+              `}
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th class="amount">Amount</th><th>Date</th><th>Description</th><th>Category</th></tr>
+                  </thead>
+                  <tbody>
+                    ${filteredRows.length === 0
+                      ? html`<tr><td colspan="4">No data</td></tr>`
+                      : filteredRows.map((r) => html`
+                          <tr>
+                            <td class="amount">${formatAmount(r.Amount)}</td>
+                            <td>${r.Date}</td>
+                            <td>${r.Description}</td>
+                            <td>${cat(r)}</td>
+                          </tr>
+                        `)}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+          <div class="bottom-bar">
+            ${tab === 'expenses' && html`
+              <select
+                value=${category}
+                onChange=${(e) => setCategory(e.target.value)}
+                disabled=${!result}
+              >
+                ${categories.map((c) => html`<option value=${c}>${c}</option>`)}
+              </select>
+            `}
+            ${tab === 'utang' && html`
+              <select
+                value=${utangFilter}
+                onChange=${(e) => setUtangFilter(e.target.value)}
+                disabled=${!result}
+              >
+                <option value="all">All</option>
+                <option value="istri">#utangistri</option>
+                <option value="suami">#utangsuami</option>
+              </select>
+            `}
+            ${tab === 'hashtag' && html`
+              <select
+                value=${hashtagFilter}
+                onChange=${(e) => setHashtagFilter(e.target.value)}
+                disabled=${!result}
+              >
+                <option value="All">All</option>
+                ${hashtags.map((h) => html`<option value=${h}>${h}</option>`)}
+              </select>
+            `}
+          </div>
+        `;
+      }
+
+      render(html`<${App} />`, document.getElementById('app'));
+    </script>
+  </body>
+</html>

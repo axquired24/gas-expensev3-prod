@@ -1,0 +1,13 @@
+{
+  "name": "gasv3prod",
+  "version": "1.0.0",
+  "description": "Gas expense v3 (prod)",
+  "scripts": {
+    "deploy": "node scripts/deploy-webapp.mjs",
+    "postdeploy": "git push -u github HEAD:main --force || true"
+  },
+  "devDependencies": {
+    "@dietrichgebert/ponytail": "^4.8.4",
+    "@google/clasp": "^3.3.0"
+  }
+}
