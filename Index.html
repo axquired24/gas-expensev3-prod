@@ -342,7 +342,7 @@
           : ['All'];
 
         const hashtags = result
-          ? Array.from(new Set(result.rows.flatMap((r) => extractHashtags(r.Description)))].sort())
+          ? Array.from(new Set(result.rows.flatMap((r) => extractHashtags(r.Description)))).sort()
           : [];
 
         const categorySums = result
