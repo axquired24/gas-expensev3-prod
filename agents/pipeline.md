@@ -29,10 +29,8 @@ npm run deploy
 2. Reads `scriptId` from `.clasp.json`.
 3. Loads OAuth creds from `~/.clasprc.json` (`tokens.default`).
 4. `script.projects.versions.create` — creates a new immutable version of the code, `description = APP_VERSION`.
-5. `script.projects.deployments.list` → filter:
-   - Must have `deploymentConfig.versionNumber` (skip HEAD).
-   - Must have `entryPoints[].webApp` (is a web‑app deployment).
-   - Sort by `deploymentConfig.versionNumber` desc, pick first.
+5. `script.projects.deployments.list` → find the deployment whose
+   `deploymentId === EXPECTED_DEPLOYMENT_ID` (see §4). Throws if not found.
 6. `script.projects.deployments.update` with body:
    ```js
    { deploymentConfig: { versionNumber, description: APP_VERSION } }
@@ -56,18 +54,30 @@ Runs immediately after `npm run deploy` and force‑pushes the current commit to
 - `package.json` — `deploy` + `postdeploy` scripts
 - `scripts/deploy-webapp.mjs` — the deploy logic
 
-## 4. Client‑side safeguards against stale data
+## 4. Pinned deployment ID
+
+The pipeline **only updates** one specific deployment. Creating a new deployment
+would generate a new public URL, which we never want.
+
+- `EXPECTED_DEPLOYMENT_ID` is hardcoded at the top of `scripts/deploy-webapp.mjs`
+- The script looks up the deployment by ID, then calls `deployments.update` —
+  same `deploymentId` → same URL, new code
+- If the pinned deployment is missing, the script throws. It **never** silently
+  creates a new one
+- Bumping `EXPECTED_DEPLOYMENT_ID` is a deliberate operation, not an accident
+
+## 5. Client‑side safeguards against stale data
 
 - `fetchSheet(param)` calls `getDevSheet(param, Date.now())`. The second arg is ignored server‑side but changes the call signature, busting Apps Script’s 6‑hour script cache.
 - The server function `getDevSheet` reads `EXPENSE_SHEET_ID` from `config.js` (single source of truth).
 - `Index.html` ships no `<meta http-equiv="Cache-Control">` (stripped by sanitisation); cache‑busting relies on the `Date.now()` arg + the deployment update.
 
-## 5. Mobile responsiveness
+## 6. Mobile responsiveness
 
 - `expense_api.js` `doGet` adds `<meta name="viewport" …>` via `addMetaTag` (the only way that survives Apps Script HTML sanitisation).
 - Static `<meta>` tags in `Index.html` are ignored by `HtmlService`.
 
-## 6. One‑shot summary
+## 7. One‑shot summary
 
 ```bash
 # 1. edit code

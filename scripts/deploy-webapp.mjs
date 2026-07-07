@@ -3,6 +3,14 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { google } from 'googleapis';
 
+// 0. PINNED DEPLOYMENT — do not change without explicit user approval.
+// This is the public web app URL:
+//   https://script.google.com/macros/s/<EXPECTED_DEPLOYMENT_ID>/exec
+// The pipeline only UPDATES this deployment. It will never create a new one
+// (creating would generate a new URL). If this deployment is missing, the
+// script fails loudly instead of silently creating a new one.
+const EXPECTED_DEPLOYMENT_ID = 'AKfycbwgMUrixaicNVmbz7-jjc9vGHC6Ywu6sqTHWxcZi3-R607pPB_k1lgsn30rnidYjU92';
+
 // 1. Read version from config.js
 const configSrc = readFileSync('config.js', 'utf8');
 const versionMatch = configSrc.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
@@ -37,22 +45,18 @@ const versionRes = await script.projects.versions.create({
 const versionNumber = versionRes.data.versionNumber;
 console.log(`Created version ${versionNumber} (${VERSION})`);
 
-// 5. Find existing versioned web app deployment (skip HEAD)
+// 5. Find the pinned deployment (refuse to create a new one)
 const list = await script.projects.deployments.list({ scriptId });
-let webDeploy = null;
-const candidates = (list.data.deployments || [])
-  .filter((d) => d.deploymentConfig && d.deploymentConfig.versionNumber)
-  .sort((a, b) => b.deploymentConfig.versionNumber - a.deploymentConfig.versionNumber);
-for (const d of candidates) {
-  const eps = d.entryPoints || [];
-  if (Array.isArray(eps) && eps.some((ep) => ep.webApp)) {
-    webDeploy = d;
-    break;
-  }
-}
+const webDeploy = (list.data.deployments || []).find(
+  (d) => d.deploymentId === EXPECTED_DEPLOYMENT_ID,
+);
 
 if (!webDeploy) {
-  throw new Error('No versioned web app deployment found. Create one via the UI first.');
+  throw new Error(
+    `Pinned deployment ${EXPECTED_DEPLOYMENT_ID} not found in script ${scriptId}. ` +
+    `Refusing to create a new deployment (would change the public URL). ` +
+    `Restore the deployment via the Apps Script editor, or update EXPECTED_DEPLOYMENT_ID in scripts/deploy-webapp.mjs.`
+  );
 }
 
 const updateRes = await script.projects.deployments.update({
