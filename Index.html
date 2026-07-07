@@ -2,6 +2,7 @@
 <html>
   <head>
     <base target="_top">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <style>
       :root {
         color-scheme: dark;
@@ -129,30 +130,13 @@
         padding: 6px 12px;
         font-size: 13px;
         white-space: nowrap;
-        position: relative;
-        display: inline-flex;
-        align-items: center;
         cursor: pointer;
         margin: 0;
         font-weight: normal;
-        text-align: left;
+        text-align: center;
         min-height: 0;
       }
-      .month-pill input[type="month"] {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        border: none;
-        padding: 0;
-        margin: 0;
-        background: transparent;
-        color: transparent;
-        min-height: 0;
-        border-radius: 999px;
-      }
+      .month-pill::placeholder { color: var(--muted); }
       .refresh-btn { padding: 6px 10px; font-size: 13px; min-height: 0; }
 
       /* Bottom bar (info only) */
@@ -171,6 +155,43 @@
         align-items: center;
         z-index: 10;
       }
+
+      /* flatpickr dark theme overrides */
+      .flatpickr-calendar {
+        background: var(--box);
+        border: 1px solid var(--border);
+        color: var(--text);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      }
+      .flatpickr-calendar.arrowTop::before,
+      .flatpickr-calendar.arrowTop::after { border-bottom-color: var(--border); }
+      .flatpickr-calendar.arrowBottom::before,
+      .flatpickr-calendar.arrowBottom::after { border-top-color: var(--border); }
+      .flatpickr-current-month .flatpickr-month,
+      .flatpickr-current-month input.cur-year {
+        color: var(--text);
+      }
+      .flatpickr-current-month .numInputWrapper:hover { background: #2a2a2a; }
+      .flatpickr-monthSelect-month {
+        color: var(--text);
+        border: 1px solid var(--border);
+        background: transparent;
+      }
+      .flatpickr-monthSelect-month:hover { background: #2a2a2a; }
+      .flatpickr-monthSelect-month.selected {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .flatpickr-weekday { color: var(--muted); }
+      .flatpickr-day { color: var(--text); }
+      .flatpickr-day:hover { background: #2a2a2a; }
+      .flatpickr-day.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .flatpickr-day.today { border-color: var(--accent); }
+      .flatpickr-day.prevMonthDay,
+      .flatpickr-day.nextMonthDay { color: var(--muted); }
+      .flatpickr-monthSelect-month.today { border-color: var(--accent); }
+
       @media (min-width: 600px) {
         .box { padding: 20px; }
       }
@@ -180,7 +201,8 @@
         "imports": {
           "preact": "https://esm.sh/preact@10.23.1",
           "preact/hooks": "https://esm.sh/preact@10.23.1/hooks",
-          "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact"
+          "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact",
+          "flatpickr": "https://esm.sh/flatpickr@4.6.13"
         }
       }
     </script>
@@ -192,6 +214,8 @@
       import { render } from 'preact';
       import { useState, useEffect, useRef } from 'preact/hooks';
       import { html } from 'htm/preact';
+      import flatpickr from 'flatpickr';
+      import monthSelectPlugin from 'https://esm.sh/flatpickr@4.6.13/dist/plugins/monthSelect.js';
 
       const fetchSheet = (param) => new Promise((resolve, reject) => {
         google.script.run
@@ -213,6 +237,17 @@
         return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
       };
 
+      const monthToDate = (m) => {
+        if (!m) return new Date();
+        const [y, mm] = m.split('-');
+        return new Date(Number(y), Number(mm) - 1, 1);
+      };
+
+      const dateToMonth = (d) => {
+        if (!d) return '';
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      };
+
       const TAB_LABELS = { expenses: 'Expenses', utang: 'Utang', hashtag: 'Hashtag' };
 
       const _now = new Date();
@@ -231,6 +266,8 @@
         const [menuOpen, setMenuOpen] = useState(false);
 
         const menuRef = useRef(null);
+        const monthInputRef = useRef(null);
+        const fpRef = useRef(null);
 
         const cat = (r) => (r.Category && r.Category.trim()) || 'No Category';
 
@@ -270,13 +307,28 @@
           return () => document.removeEventListener('click', onClick);
         }, [menuOpen]);
 
-        const handleMonthChange = (e) => {
-          const v = e.target.value;
-          if (v) {
-            setMonth(v);
-            load(v);
-          }
-        };
+        useEffect(() => {
+          if (!monthInputRef.current) return;
+          const fp = flatpickr(monthInputRef.current, {
+            plugins: [monthSelectPlugin({
+              shorthand: true,
+              dateFormat: 'M Y',
+              altFormat: 'F Y',
+            })],
+            defaultDate: monthToDate(month),
+            allowInput: false,
+            onChange: (selectedDates) => {
+              if (selectedDates[0]) {
+                const v = dateToMonth(selectedDates[0]);
+                setMonth(v);
+                load(v);
+              }
+            },
+          });
+          fpRef.current = fp;
+          return () => fp.destroy();
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
 
         const handleRefresh = () => { load(); };
 
@@ -290,7 +342,7 @@
           : ['All'];
 
         const hashtags = result
-          ? Array.from(new Set(result.rows.flatMap((r) => extractHashtags(r.Description)))).sort()
+          ? Array.from(new Set(result.rows.flatMap((r) => extractHashtags(r.Description)))].sort())
           : [];
 
         const categorySums = result
@@ -365,19 +417,19 @@
               `}
             </div>
             <div class="right">
-              <label class="month-pill">
-                ${formatMonth(month)}
-                <input
-                  type="month"
-                  value=${month}
-                  onChange=${handleMonthChange}
-                />
-              </label>
+              <input
+                ref=${monthInputRef}
+                class="month-pill"
+                type="text"
+                placeholder="Select month"
+                value=${formatMonth(month)}
+                readOnly
+              />
               <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
             </div>
           </div>
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.10</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.11</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
