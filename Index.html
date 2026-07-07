@@ -149,6 +149,7 @@
         min-height: 0;
       }
       .month-pill::placeholder { color: var(--muted); }
+      .hidden-on-add { display: none !important; }
       .refresh-btn { padding: 6px 10px; font-size: 13px; min-height: 0; }
 
       /* Bottom bar (info only) */
@@ -903,22 +904,22 @@
               `}
             </div>
             <div class="right">
+              <input
+                ref=${monthInputRef}
+                class=${`month-pill ${tab === 'add-expense' ? 'hidden-on-add' : ''}`}
+                type="text"
+                placeholder="Select month"
+                value=${formatMonth(month)}
+                readOnly
+              />
               ${tab !== 'add-expense' && html`
-                <input
-                  ref=${monthInputRef}
-                  class="month-pill"
-                  type="text"
-                  placeholder="Select month"
-                  value=${formatMonth(month)}
-                  readOnly
-                />
                 <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
               `}
             </div>
           </div>
           ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.15</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.16</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
