@@ -6,4 +6,4 @@ pipeline (`scripts/deploy-webapp.mjs`); update when a new deployment is created.
 | branch | deploymentId | version | description | url |
 |---|---|---|---|---|
 | `main` | `AKfycbwgMUrixaicNVmbz7-jjc9vGHC6Ywu6sqTHWxcZi3-R607pPB_k1lgsn30rnidYjU92` | 9 (pinned) | feat: new UI v1.2 | https://script.google.com/macros/s/AKfycbwgMUrixaicNVmbz7-jjc9vGHC6Ywu6sqTHWxcZi3-R607pPB_k1lgsn30rnidYjU92/exec |
-| `feat/bump-version` | `AKfycby3tocRBhNfFMlcB8DBBz-wUzrEEDeX3L2mjwzZvcVWflLIbCplRNdYiSRIzjwjOM4f` | 14 | 1.1.11 (feat/bump-version) | https://script.google.com/macros/s/AKfycby3tocRBhNfFMlcB8DBBz-wUzrEEDeX3L2mjwzZvcVWflLIbCplRNdYiSRIzjwjOM4f/exec |
+| `feat/bump-version` | `AKfycby3tocRBhNfFMlcB8DBBz-wUzrEEDeX3L2mjwzZvcVWflLIbCplRNdYiSRIzjwjOM4f` | 15 | 1.1.12 (feat/bump-version) | https://script.google.com/macros/s/AKfycby3tocRBhNfFMlcB8DBBz-wUzrEEDeX3L2mjwzZvcVWflLIbCplRNdYiSRIzjwjOM4f/exec |
