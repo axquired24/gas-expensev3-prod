@@ -237,14 +237,13 @@
         flex-direction: column;
         max-width: 640px;
         margin: 0 auto;
-        min-height: calc(100vh - 56px - 48px);
+        padding-bottom: 80px;
       }
       .chat-history {
         display: flex;
         flex-direction: column;
         gap: 8px;
         padding: 4px 0 16px;
-        flex: 1;
       }
       .chat-bubble {
         padding: 8px 12px;
@@ -902,7 +901,7 @@
           </div>
           ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.13</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.14</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
@@ -1032,7 +1031,7 @@
           ${tagSuggest.open && html`
             <div class="tag-suggest">
               ${tagSuggest.list.map((t) => html`
-                <div class="tag-suggest-item" onClick=${() => insertTagSuggestion(t)}>${t}</div>
+                <div class="tag-suggest-item" onMouseDown=${(e) => { e.preventDefault(); insertTagSuggestion(t); }}>${t}</div>
               `)}
             </div>
           `}
