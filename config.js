@@ -13,7 +13,7 @@ const CONFIG_KEY = {
 const EXPENSE_SHEET_ID = '1-TnWsmsM9XAQpaCWIfR5RhezwgVPpeozz42OMYaKmCM';
 
 // App Version
-const APP_VERSION = '1.1.11'; // New variable for the application version
+const APP_VERSION = '1.1.12'; // New variable for the application version
 
 // Webhook URL
 // IMPORTANT: Replace 'YOUR_DEPLOYED_WEB_APP_URL_HERE' with the actual URL you get
