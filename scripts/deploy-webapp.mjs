@@ -6,7 +6,7 @@ import { google } from 'googleapis';
 // 0. PINNED DEPLOYMENT (main branch only) — public URL preserved.
 const EXPECTED_DEPLOYMENT_ID = 'AKfycbwgMUrixaicNVmbz7-jjc9vGHC6Ywu6sqTHWxcZi3-R607pPB_k1lgsn30rnidYjU92';
 // Version the main branch is locked to. Non-main branches create fresh versions.
-const LOCKED_VERSION = 15;
+const LOCKED_VERSION = 18;
 
 // 1. Read version from config.js
 const configSrc = readFileSync('config.js', 'utf8');

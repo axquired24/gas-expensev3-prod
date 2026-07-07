@@ -204,6 +204,273 @@
       .flatpickr-day.nextMonthDay { color: var(--muted); }
       .flatpickr-monthSelect-month.today { border-color: var(--accent); }
 
+      /* Floating + button (Expenses tab) */
+      .fab {
+        position: fixed;
+        right: calc(16px + env(safe-area-inset-right));
+        bottom: calc(64px + env(safe-area-inset-bottom));
+        max-width: 640px;
+        margin: 0 auto;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        font-size: 26px;
+        line-height: 1;
+        cursor: pointer;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+      .fab:hover { filter: brightness(1.1); }
+      /* anchor FAB to right edge of the centered 640px column */
+      .fab-wrap { position: fixed; left: 0; right: 0; bottom: 0; height: 0; pointer-events: none; z-index: 15; }
+      .fab-wrap .fab { pointer-events: auto; position: absolute; right: calc(16px + env(safe-area-inset-right)); bottom: calc(64px + env(safe-area-inset-bottom)); }
+
+      /* Add Expense tab */
+      .add-expense-view {
+        display: flex;
+        flex-direction: column;
+        max-width: 640px;
+        margin: 0 auto;
+        padding-bottom: 80px;
+      }
+      .chat-history {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px 0 16px;
+      }
+      .chat-bubble {
+        padding: 8px 12px;
+        border-radius: 12px;
+        max-width: 80%;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .chat-bubble.user {
+        align-self: flex-end;
+        background: var(--accent);
+        color: #fff;
+        border-bottom-right-radius: 4px;
+      }
+      .chat-bubble.bot {
+        align-self: flex-start;
+        background: var(--box);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-bottom-left-radius: 4px;
+      }
+      .chat-empty-hint {
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+        padding: 24px 8px;
+      }
+      .chatbox {
+        position: fixed;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        max-width: 640px;
+        bottom: 0;
+        padding: 8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+        background: var(--box);
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        z-index: 20;
+      }
+      .chatbox textarea {
+        flex: 1;
+        min-height: 40px;
+        max-height: 120px;
+        resize: none;
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 18px;
+        border: 1px solid #3a3a3a;
+        background: #2a2a2a;
+        color: var(--text);
+        font-family: inherit;
+      }
+      .plane-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .plane-btn:hover { filter: brightness(1.1); }
+      .plane-btn:disabled { background: #555; cursor: not-allowed; }
+
+      /* Tag autocomplete */
+      .tag-suggest {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        margin: 0 auto;
+        max-width: 640px;
+        bottom: 64px;
+        background: var(--box);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        max-height: 180px;
+        overflow-y: auto;
+        z-index: 25;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+      }
+      .tag-suggest-item {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .tag-suggest-item:hover { background: #2a2a2a; }
+
+      /* Preview table */
+      .preview-wrap { margin: 12px 0; overflow-x: auto; }
+      .preview-wrap table { min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; width: 100%; }
+      .preview-wrap th { background: #232323; color: var(--muted); padding: 8px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
+      .preview-wrap td { padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+      .preview-wrap tr { cursor: pointer; }
+      .preview-wrap tr:hover td { background: #232323; }
+      .preview-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 8px 0; }
+      .submit-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+      .submit-btn:hover { filter: brightness(1.1); }
+      .submit-btn:disabled { background: #555; cursor: not-allowed; }
+
+      /* Spinner */
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--accent);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        top: calc(56px + env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--box);
+        border: 1px solid var(--accent);
+        color: var(--text);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        z-index: 100;
+        max-width: 90%;
+        text-align: center;
+      }
+
+      /* Edit modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .edit-modal {
+        background: var(--box);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        width: calc(100% - 32px);
+        max-width: 360px;
+        z-index: 100;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+      }
+      .modal-close {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 22px;
+        cursor: pointer;
+        padding: 4px 8px;
+        line-height: 1;
+      }
+      .modal-close:hover { color: var(--text); }
+      .amount-preview { font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
+      .edit-modal h3 { margin: 0 0 16px; font-size: 16px; }
+      .edit-modal label.field-label {
+        display: block;
+        margin: 12px 0 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .edit-modal input[type="tel"],
+      .edit-modal input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid #3a3a3a;
+        background: #2a2a2a;
+        color: var(--text);
+        font-family: inherit;
+      }
+      .edit-modal .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .edit-modal .radio-group label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--text);
+        font-size: 13px;
+        margin: 0;
+        padding: 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        background: #232323;
+      }
+      .edit-modal .radio-group label:has(input:checked) {
+        border-color: var(--accent);
+        color: #fff;
+        background: rgba(10,132,255,0.2);
+      }
+      .edit-modal .radio-group input { margin: 0; }
+      .edit-modal .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .edit-modal .actions button { padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; border: none; }
+      .edit-modal .btn-reset { background: #2a2a2a; color: var(--text); border: 1px solid var(--border); }
+      .edit-modal .btn-save { background: var(--accent); color: #fff; }
+
       @media (min-width: 600px) {
         .box { padding: 20px; }
       }
@@ -260,7 +527,74 @@
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       };
 
-      const TAB_LABELS = { expenses: 'Expenses', utang: 'Utang', hashtag: 'Hashtag' };
+      const TAB_LABELS = { expenses: 'Expenses', utang: 'Utang', hashtag: 'Hashtag', 'add-expense': 'Add Expense' };
+
+      const CATEGORY_TAGS = ['#bulanan','#hiburan','#hamil','#pio','#bayi','#gift','#rumah','#bukanbulanan','#ngantor','#nocat'];
+      const UTANG_TAGS = ['#utangsuami','#utangistri'];
+      const ALL_TAGS = [...CATEGORY_TAGS, ...UTANG_TAGS];
+      const TAG_TO_CATEGORY = {
+        '#bulanan':'-Belanja Serumah', '#hiburan':'-Hiburan', '#hamil':'-Hiburan',
+        '#pio':'-Bayi', '#bayi':'-Bayi', '#gift':'-Gift', '#rumah':'-Tabungan Rumah',
+        '#bukanbulanan':'-Bukan Bulanan', '#ngantor':'-Ngantor', '#nocat':'',
+      };
+
+      const todayGMT7 = () => {
+        const d = new Date(Date.now() + 7 * 3600 * 1000);
+        return d.toISOString().split('T')[0];
+      };
+
+      const firstHashtagsIn = (desc) => {
+        if (!desc) return [];
+        const m = desc.match(/#[a-z]+/gi);
+        return m || [];
+      };
+      const firstCategoryTag = (desc) => firstHashtagsIn(desc).find(h => CATEGORY_TAGS.includes(h.toLowerCase())) || '';
+      const firstUtangTag = (desc) => firstHashtagsIn(desc).find(h => UTANG_TAGS.includes(h.toLowerCase())) || '';
+
+      const parseChatInput = (text) => {
+        return (text || '').split(/\r?\n|\r|\n/g).map(parseLine).filter(Boolean);
+      };
+
+      const parseLine = (line) => {
+        if (!line || !line.trim()) return null;
+        let s = line.trim();
+        const colonParts = s.split(/:\s+/);
+        if (colonParts.length > 1) s = colonParts[colonParts.length - 1];
+        const tokens = s.split(/\s+/);
+        if (tokens.length < 2) return null;
+        let amountStr = tokens.shift();
+        let amount = parseFloat(amountStr.replace('k','').replace(',','.'));
+        if (amountStr.includes('k')) amount *= 1000;
+        if (isNaN(amount)) return null;
+        let desc = tokens.join(' ').trim();
+        if (!firstCategoryTag(desc) && amount < 0) desc = (desc + ' #bulanan').trim();
+        const categoryTag = firstCategoryTag(desc);
+        const utangTag = firstUtangTag(desc);
+        const derivedCategory = categoryTag ? (TAG_TO_CATEGORY[categoryTag.toLowerCase()] || '') : '';
+        return { date: todayGMT7(), amount, desc, categoryTag, utangTag, derivedCategory };
+      };
+
+      const formatRupiah = (n) => 'Rp' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.abs(n)) + (n < 0 ? ' (−)' : '');
+      const parseRupiah = (s) => {
+        if (!s) return 0;
+        let v = s.replace(/rp/i, '').replace(/[.\s]/g, '').replace(',', '.');
+        const neg = /^-|−/.test(s);
+        let n = parseFloat(v);
+        if (isNaN(n)) return 0;
+        return neg || /−/.test(s) ? -Math.abs(n) : Math.abs(n);
+      };
+      const rebuildDesc = (plainWords, categoryTag, utangTag) => {
+        let d = plainWords || '';
+        if (categoryTag) d = (d + ' ' + categoryTag).trim();
+        if (utangTag) d = (d + ' ' + utangTag).trim();
+        return d;
+      };
+      const plainWordsOf = (desc) => {
+        if (!desc) return '';
+        return desc.replace(/#[a-z]+/gi, '').replace(/\s+/g, ' ').trim();
+      };
+
+      let _toastTimer = null;
 
       const _now = new Date();
       const defaultMonth = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`;
@@ -276,10 +610,19 @@
         const [loading, setLoading] = useState(false);
         const [error, setError] = useState(null);
         const [menuOpen, setMenuOpen] = useState(false);
+        const [chatInput, setChatInput] = useState('');
+        const [previewRows, setPreviewRows] = useState([]);
+        const [editingRowIdx, setEditingRowIdx] = useState(null);
+        const [editForm, setEditForm] = useState({ amount: 0, amountText: '', date: '', categoryTag: '', utangTag: '', plainWords: '' });
+        const [submitting, setSubmitting] = useState(false);
+        const [toast, setToast] = useState(null);
+        const [chatHistory, setChatHistory] = useState([]);
+        const [tagSuggest, setTagSuggest] = useState({ open: false, list: [], partial: '', caretStart: 0 });
 
         const menuRef = useRef(null);
         const monthInputRef = useRef(null);
         const fpRef = useRef(null);
+        const chatInputRef = useRef(null);
 
         const cat = (r) => (r.Category && r.Category.trim()) || 'No Category';
 
@@ -343,6 +686,136 @@
         }, []);
 
         const handleRefresh = () => { load(); };
+
+        const showToast = (msg) => {
+          setToast(msg);
+          if (_toastTimer) clearTimeout(_toastTimer);
+          _toastTimer = setTimeout(() => setToast(null), 3500);
+        };
+
+        const handleChatInput = (e) => {
+          const v = e.target.value;
+          setChatInput(v);
+          const caret = e.target.selectionStart != null ? e.target.selectionStart : v.length;
+          const before = v.slice(0, caret);
+          const m = before.match(/#([a-z]*)$/i);
+          if (m) {
+            const partial = m[1];
+            const list = ALL_TAGS
+              .filter(t => t.toLowerCase().startsWith(('#' + partial).toLowerCase()) && t.toLowerCase() !== ('#' + partial).toLowerCase());
+            setTagSuggest({ open: list.length > 0, list, partial: '#' + partial, caretStart: caret - m[0].length });
+          } else {
+            setTagSuggest({ open: false, list: [], partial: '', caretStart: 0 });
+          }
+        };
+
+        const insertTagSuggestion = (tag) => {
+          const { caretStart } = tagSuggest;
+          const ta = chatInputRef.current;
+          if (!ta || caretStart == null) return;
+          const before = chatInput.slice(0, caretStart);
+          const after = chatInput.slice(caretStart + tagSuggest.partial.length);
+          const newVal = before + tag + ' ' + after;
+          setChatInput(newVal);
+          setTagSuggest({ open: false, list: [], partial: '', caretStart: 0 });
+          requestAnimationFrame(() => {
+            const pos = caretStart + tag.length + 1;
+            ta.focus();
+            ta.setSelectionRange(pos, pos);
+          });
+        };
+
+        const handlePlaneClick = () => {
+          const rows = parseChatInput(chatInput);
+          if (rows.length === 0) {
+            showToast('No valid entries. Format: -31k makan #ngantor');
+            return;
+          }
+          setPreviewRows(rows);
+        };
+
+        const openEditRow = (idx) => {
+          const row = previewRows[idx];
+          if (!row) return;
+          setEditForm({
+            amount: row.amount,
+            amountText: String(row.amount),
+            date: row.date,
+            categoryTag: row.categoryTag || '',
+            utangTag: row.utangTag || '',
+            plainWords: plainWordsOf(row.desc),
+          });
+          setEditingRowIdx(idx);
+        };
+
+        const closeEdit = () => setEditingRowIdx(null);
+
+        const resetEditForm = () => {
+          if (editingRowIdx == null) return;
+          const row = previewRows[editingRowIdx];
+          setEditForm({
+            amount: row.amount,
+            amountText: String(row.amount),
+            date: row.date,
+            categoryTag: row.categoryTag || '',
+            utangTag: row.utangTag || '',
+            plainWords: plainWordsOf(row.desc),
+          });
+        };
+
+        const saveEdit = () => {
+          if (editingRowIdx == null) return;
+          const f = editForm;
+          const newDesc = rebuildDesc(f.plainWords, f.categoryTag, f.utangTag);
+          const derivedCategory = f.categoryTag ? (TAG_TO_CATEGORY[f.categoryTag.toLowerCase()] || '') : '';
+          const updated = { ...previewRows[editingRowIdx], amount: f.amount, date: f.date, desc: newDesc, categoryTag: f.categoryTag, utangTag: f.utangTag, derivedCategory };
+          const next = previewRows.slice();
+          next[editingRowIdx] = updated;
+          setPreviewRows(next);
+          setEditingRowIdx(null);
+        };
+
+        const reconstructText = (rows) => {
+          return rows.map(r => {
+            const amt = r.amount;
+            const desc = r.desc || '';
+            return `${amt} ${desc}`.trim();
+          }).join('\n');
+        };
+
+        const callSubmitExpense = (text) => new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .handleSubmitFromUIChat(text);
+        });
+
+        const handleSubmitToSheet = async () => {
+          if (previewRows.length === 0) return;
+          setSubmitting(true);
+          const text = reconstructText(previewRows);
+          const userBubble = chatInput;
+          try {
+            const res = await callSubmitExpense(text);
+            if (!res || res.success === false) {
+              showToast('Error: ' + (res?.error || 'submit failed'));
+            } else {
+              setChatHistory(h => [
+                ...h,
+                { sender: 'user', text: userBubble, ts: Date.now() },
+                { sender: 'bot', text: res.reply, ts: Date.now() },
+              ]);
+              showToast('Saved ' + res.sheetRows + ' rows → ' + res.sheetName);
+              setPreviewRows([]);
+              setChatInput('');
+              load();
+            }
+          } catch (e) {
+            showToast('Error: ' + (e.message || String(e)));
+          } finally {
+            setSubmitting(false);
+          }
+        };
 
         const selectTab = (next) => {
           setTab(next);
@@ -425,23 +898,27 @@
                   <button class=${`menu-item ${tab === 'expenses' ? 'active' : ''}`} onClick=${() => selectTab('expenses')}>Expenses</button>
                   <button class=${`menu-item ${tab === 'utang' ? 'active' : ''}`} onClick=${() => selectTab('utang')}>Utang</button>
                   <button class=${`menu-item ${tab === 'hashtag' ? 'active' : ''}`} onClick=${() => selectTab('hashtag')}>Hashtag</button>
+                  <button class=${`menu-item ${tab === 'add-expense' ? 'active' : ''}`} onClick=${() => selectTab('add-expense')}>Add Expense</button>
                 </div>
               `}
             </div>
             <div class="right">
-              <input
-                ref=${monthInputRef}
-                class="month-pill"
-                type="text"
-                placeholder="Select month"
-                value=${formatMonth(month)}
-                readOnly
-              />
-              <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
+              ${tab !== 'add-expense' && html`
+                <input
+                  ref=${monthInputRef}
+                  class="month-pill"
+                  type="text"
+                  placeholder="Select month"
+                  value=${formatMonth(month)}
+                  readOnly
+                />
+                <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
+              `}
             </div>
           </div>
+          ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.12</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.15</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
@@ -513,9 +990,122 @@
               </div>
             `}
           </div>
+          `}
+          ${tab === 'add-expense' && html`
+            <div class="add-expense-view">
+              ${chatHistory.length === 0 && previewRows.length === 0
+                ? html`<div class="chat-empty-hint">Type expense like:<br/>-31k makan #ngantor #utangsuami<br/>-40k ikan #utangistri<br/>Then ✈ for preview.</div>`
+                : html`
+                  <div class="chat-history">
+                    ${chatHistory.map((b) => html`<div class=${`chat-bubble ${b.sender}`}>${b.text}</div>`)}
+                  </div>
+                `
+              }
+              ${previewRows.length > 0 && html`
+                <div class="preview-wrap">
+                  <table>
+                    <thead><tr><th>Date</th><th>Amount</th><th>Cat</th><th>Utang</th></tr></thead>
+                    <tbody>
+                      ${previewRows.map((r, i) => html`
+                        <tr onClick=${() => openEditRow(i)}>
+                          <td>${r.date}</td>
+                          <td>${formatRupiah(r.amount)}</td>
+                          <td>${r.categoryTag || '—'}</td>
+                          <td>${r.utangTag || '—'}</td>
+                        </tr>
+                      `)}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="preview-actions">
+                  ${submitting && html`<span class="spinner"></span>`}
+                  <button class="submit-btn" disabled=${submitting} onClick=${handleSubmitToSheet}>Submit to sheet</button>
+                </div>
+              `}
+            </div>
+          `}
+          ${tab === 'expenses' && html`
+            <div class="fab-wrap">
+              <button class="fab" onClick=${() => selectTab('add-expense')}>+</button>
+            </div>
+          `}
+          ${tab !== 'add-expense' && html`
           <div class="bottom-bar">
             ${result && html`<span class="loaded-info">Loaded ${result.rowLen} | Showing ${filteredRows.length}</span>`}
           </div>
+          `}
+          ${tab === 'add-expense' && html`
+            <div class="chatbox">
+              <textarea
+                ref=${chatInputRef}
+                placeholder="-31k makan #ngantor"
+                value=${chatInput}
+                onInput=${handleChatInput}
+              ></textarea>
+              <button class="plane-btn" onClick=${handlePlaneClick} disabled=${submitting}>✈</button>
+            </div>
+          `}
+          ${tagSuggest.open && html`
+            <div class="tag-suggest">
+              ${tagSuggest.list.map((t) => html`
+                <div class="tag-suggest-item" onMouseDown=${(e) => { e.preventDefault(); insertTagSuggestion(t); }}>${t}</div>
+              `)}
+            </div>
+          `}
+          ${toast && html`<div class="toast">${toast}</div>`}
+          ${editingRowIdx != null && html`
+            <div class="modal-backdrop" onClick=${closeEdit}>
+              <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                <button class="modal-close" onClick=${closeEdit}>×</button>
+                <h3>Edit Row ${editingRowIdx + 1}</h3>
+                <label class="field-label">Amount</label>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  value=${editForm.amountText}
+                  onInput=${(e) => {
+                    let clean = e.target.value.replace(/[^\d-]/g, '');
+                    const neg = clean.startsWith('-');
+                    clean = clean.replace(/-/g, '');
+                    if (neg) clean = '-' + clean;
+                    const n = parseFloat(clean);
+                    setEditForm({...editForm, amountText: clean, amount: isNaN(n) ? 0 : n});
+                  }}
+                />
+                <div class="amount-preview">${formatRupiah(editForm.amount)}</div>
+                <label class="field-label">Date</label>
+                <input
+                  type="date"
+                  value=${editForm.date}
+                  onInput=${(e) => setEditForm({...editForm, date: e.target.value})}
+                />
+                <label class="field-label">Description (no hashtags)</label>
+                <input
+                  type="text"
+                  value=${editForm.plainWords}
+                  onInput=${(e) => setEditForm({...editForm, plainWords: e.target.value.replace(/#[a-z]+/gi, '').trim()})}
+                />
+                <label class="field-label">Category tag</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="cat-tag" value="" checked=${editForm.categoryTag === ''} onChange=${() => setEditForm({...editForm, categoryTag: ''})} /> no cat</label>
+                  ${CATEGORY_TAGS.map((t) => html`
+                    <label><input type="radio" name="cat-tag" value=${t} checked=${editForm.categoryTag === t} onChange=${() => setEditForm({...editForm, categoryTag: t})} /> ${t}</label>
+                  `)}
+                </div>
+                <label class="field-label">Utang tag</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="utang-tag" value="" checked=${editForm.utangTag === ''} onChange=${() => setEditForm({...editForm, utangTag: ''})} /> not utang</label>
+                  ${UTANG_TAGS.map((t) => html`
+                    <label><input type="radio" name="utang-tag" value=${t} checked=${editForm.utangTag === t} onChange=${() => setEditForm({...editForm, utangTag: t})} /> ${t}</label>
+                  `)}
+                </div>
+                <div class="actions">
+                  <button class="btn-reset" onClick=${resetEditForm}>Reset</button>
+                  <button class="btn-save" onClick=${saveEdit}>Save</button>
+                </div>
+              </div>
+            </div>
+          `}
         `;
       }
 
