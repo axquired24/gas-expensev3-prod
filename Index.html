@@ -402,7 +402,22 @@
         z-index: 100;
         max-height: 90vh;
         overflow-y: auto;
+        position: relative;
       }
+      .modal-close {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 22px;
+        cursor: pointer;
+        padding: 4px 8px;
+        line-height: 1;
+      }
+      .modal-close:hover { color: var(--text); }
+      .amount-preview { font-size: 12px; color: var(--muted); margin: 2px 0 8px; }
       .edit-modal h3 { margin: 0 0 16px; font-size: 16px; }
       .edit-modal label.field-label {
         display: block;
@@ -598,7 +613,7 @@
         const [chatInput, setChatInput] = useState('');
         const [previewRows, setPreviewRows] = useState([]);
         const [editingRowIdx, setEditingRowIdx] = useState(null);
-        const [editForm, setEditForm] = useState({ amount: 0, date: '', categoryTag: '', utangTag: '', plainWords: '' });
+        const [editForm, setEditForm] = useState({ amount: 0, amountText: '', date: '', categoryTag: '', utangTag: '', plainWords: '' });
         const [submitting, setSubmitting] = useState(false);
         const [toast, setToast] = useState(null);
         const [chatHistory, setChatHistory] = useState([]);
@@ -724,6 +739,7 @@
           if (!row) return;
           setEditForm({
             amount: row.amount,
+            amountText: String(row.amount),
             date: row.date,
             categoryTag: row.categoryTag || '',
             utangTag: row.utangTag || '',
@@ -739,6 +755,7 @@
           const row = previewRows[editingRowIdx];
           setEditForm({
             amount: row.amount,
+            amountText: String(row.amount),
             date: row.date,
             categoryTag: row.categoryTag || '',
             utangTag: row.utangTag || '',
@@ -901,7 +918,7 @@
           </div>
           ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.14</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.15</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
@@ -1039,19 +1056,34 @@
           ${editingRowIdx != null && html`
             <div class="modal-backdrop" onClick=${closeEdit}>
               <div class="edit-modal" onClick=${(e) => e.stopPropagation()}>
+                <button class="modal-close" onClick=${closeEdit}>×</button>
                 <h3>Edit Row ${editingRowIdx + 1}</h3>
-                <label class="field-label">Amount (Rp)</label>
+                <label class="field-label">Amount</label>
                 <input
-                  type="tel"
-                  inputmode="tel"
-                  value=${formatRupiah(editForm.amount)}
-                  onInput=${(e) => setEditForm({...editForm, amount: parseRupiah(e.target.value)})}
+                  type="text"
+                  inputmode="numeric"
+                  value=${editForm.amountText}
+                  onInput=${(e) => {
+                    let clean = e.target.value.replace(/[^\d-]/g, '');
+                    const neg = clean.startsWith('-');
+                    clean = clean.replace(/-/g, '');
+                    if (neg) clean = '-' + clean;
+                    const n = parseFloat(clean);
+                    setEditForm({...editForm, amountText: clean, amount: isNaN(n) ? 0 : n});
+                  }}
                 />
+                <div class="amount-preview">${formatRupiah(editForm.amount)}</div>
                 <label class="field-label">Date</label>
                 <input
                   type="date"
                   value=${editForm.date}
                   onInput=${(e) => setEditForm({...editForm, date: e.target.value})}
+                />
+                <label class="field-label">Description (no hashtags)</label>
+                <input
+                  type="text"
+                  value=${editForm.plainWords}
+                  onInput=${(e) => setEditForm({...editForm, plainWords: e.target.value.replace(/#[a-z]+/gi, '').trim()})}
                 />
                 <label class="field-label">Category tag</label>
                 <div class="radio-group">
