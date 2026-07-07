@@ -47,12 +47,11 @@ npm run deploy
 3. Loads OAuth creds from `~/.clasprc.json` (`tokens.default`).
 4. `script.projects.versions.create` — creates a new immutable version,
    `description = "${APP_VERSION} (${branch})"`.
-5. `script.projects.deployments.create` with body
-   `{ deploymentConfig: { versionNumber, description: "${APP_VERSION} (${branch})" } }`.
-   This creates a fresh deployment (new URL) for the branch. The pinned main deployment
-   is untouched. Each deploy on a non-main branch adds another deployment — clean up
-   via the GAS editor or a separate `deployments.delete` script.
-6. Logs new deployment id and **web app URL** (differs from main URL).
+5. `script.projects.deployments.list` → find the deployment whose description
+   ends in `(${branch})`. If found, `deployments.update` it in place (same URL,
+   new code). If not, `deployments.create` a new deployment (new URL).
+6. Logs the deployment id and **web app URL** (stable across deploys of the
+   same branch — first deploy creates, subsequent deploys update).
 7. `spawn('open', [url])` — opens the URL in the default browser (macOS).
 
 ### `postdeploy` (automatic)
@@ -85,11 +84,13 @@ differently per branch.
   creates a new one on main
 
 **Preview URLs (non-main branches):**
-- Each `npm run deploy` on a non-main branch creates a new immutable version
-  and a new deployment (new URL) with description `${APP_VERSION} (${branch})`
+- Each `npm run deploy` on a non-main branch creates a new version
+- If a deployment for this branch already exists (description ending in
+  `(${branch})`), the existing deployment is **updated in place** — same
+  URL, new code. This is how branches keep a stable preview URL across deploys.
+- First deploy on a new branch creates a new deployment (new URL). Subsequent
+  deploys on the same branch update that same deployment.
 - The pinned `main` deployment is untouched
-- Non-main deployments accumulate — clean up via the GAS editor or a separate
-  `deployments.delete` script
 - Bumping `EXPECTED_DEPLOYMENT_ID` or `LOCKED_VERSION` is a deliberate operation,
   not an accident
 

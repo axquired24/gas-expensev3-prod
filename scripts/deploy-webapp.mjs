@@ -75,7 +75,8 @@ if (isMain) {
     spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
   }
 } else {
-  // NON-MAIN: create new version + new deployment (new URL per branch)
+  // NON-MAIN: create new version, then update existing deployment for this branch
+  // (or create a new one on first deploy of this branch)
   const versionRes = await script.projects.versions.create({
     scriptId,
     requestBody: { description: `${VERSION} (${branch})` },
@@ -83,16 +84,31 @@ if (isMain) {
   const versionNumber = versionRes.data.versionNumber;
   console.log(`Created version ${versionNumber} (${VERSION}) on branch ${branch}`);
 
-  const createRes = await script.projects.deployments.create({
-    scriptId,
-    requestBody: {
-      versionNumber,
-      description: `${VERSION} (${branch})`,
-    },
-  });
-  const deploymentId = createRes.data.deploymentId;
-  const url = createRes.data.entryPoints?.find((e) => e.webApp)?.webApp?.url;
-  console.log(`Created new deployment ${deploymentId} on branch ${branch}`);
+  const list = await script.projects.deployments.list({ scriptId });
+  const branchSuffix = `(${branch})`;
+  const existing = (list.data.deployments || []).find(
+    (d) => typeof d.deploymentConfig?.description === 'string'
+      && d.deploymentConfig.description.endsWith(branchSuffix),
+  );
+
+  let res;
+  if (existing) {
+    res = await script.projects.deployments.update({
+      scriptId,
+      deploymentId: existing.deploymentId,
+      requestBody: {
+        deploymentConfig: { versionNumber, description: `${VERSION} ${branchSuffix}` },
+      },
+    });
+    console.log(`[${branch}] updated deployment ${existing.deploymentId} to v${versionNumber}`);
+  } else {
+    res = await script.projects.deployments.create({
+      scriptId,
+      requestBody: { versionNumber, description: `${VERSION} ${branchSuffix}` },
+    });
+    console.log(`[${branch}] created new deployment ${res.data.deploymentId} for v${versionNumber}`);
+  }
+  const url = res.data.entryPoints?.find((e) => e.webApp)?.webApp?.url;
   console.log(`Web app URL : ${url}`);
   spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
 }

@@ -19,7 +19,7 @@
         font-family: sans-serif;
         background: var(--bg);
         color: var(--text);
-        padding: calc(56px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+        padding: calc(56px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
       }
       .box {
         background: var(--box);
@@ -47,7 +47,7 @@
       }
       th.amount { background: #232323; }
       .error-msg { color: var(--error); font-weight: bold; }
-      input[type="month"], select, button {
+      .filter-select {
         padding: 10px;
         font-size: 14px;
         min-height: 40px;
@@ -55,10 +55,10 @@
         border: 1px solid #3a3a3a;
         background: #2a2a2a;
         color: var(--text);
+        width: 100%;
+        margin: 8px 0;
       }
-      button { background: var(--accent); color: #fff; border: none; cursor: pointer; }
-      button:hover { filter: brightness(1.1); }
-      button:disabled { background: #555; cursor: not-allowed; }
+      .loaded-info { color: var(--muted); font-size: 12px; margin: 0; }
 
       /* Top bar */
       .top-bar {
@@ -75,17 +75,48 @@
         gap: 8px;
         z-index: 20;
       }
-      .top-bar .tabs { display: flex; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; }
-      .tab-btn {
+      .hamburger-wrap { position: relative; flex: 1; min-width: 0; }
+      .hamburger-btn {
         background: transparent;
-        color: var(--muted);
-        border: 1px solid transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
         border-radius: 6px;
-        padding: 6px 10px;
+        padding: 6px 12px;
         font-size: 14px;
-        white-space: nowrap;
+        min-height: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 100%;
       }
-      .tab-btn.active { color: var(--text); border-color: var(--accent); }
+      .hamburger-btn:hover { filter: brightness(1.1); background: #2a2a2a; }
+      .hamburger-icon { font-size: 16px; line-height: 1; }
+      .hamburger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .hamburger-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        min-width: 180px;
+        background: var(--box);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        z-index: 25;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .menu-item {
+        background: transparent;
+        color: var(--text);
+        border: none;
+        border-radius: 0;
+        padding: 12px 14px;
+        font-size: 14px;
+        text-align: left;
+        min-height: 0;
+      }
+      .menu-item:hover { background: #2a2a2a; filter: none; }
+      .menu-item.active { color: var(--accent); }
       .top-bar .right { display: flex; align-items: center; gap: 6px; }
       .month-pill {
         background: #2a2a2a;
@@ -96,10 +127,18 @@
         font-size: 13px;
         white-space: nowrap;
       }
-      .month-picker { position: absolute; right: 8px; top: 56px; z-index: 30; }
+      .month-picker {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 1px;
+        height: 1px;
+        left: -9999px;
+        top: 0;
+      }
       .refresh-btn { padding: 6px 10px; font-size: 13px; min-height: 0; }
 
-      /* Bottom bar */
+      /* Bottom bar (info only) */
       .bottom-bar {
         position: fixed;
         left: 0;
@@ -113,7 +152,6 @@
         align-items: center;
         z-index: 10;
       }
-      .bottom-bar select { flex: 1; min-width: 0; }
       @media (min-width: 600px) {
         .box { padding: 20px; }
       }
@@ -133,7 +171,7 @@
 
     <script type="module">
       import { render } from 'preact';
-      import { useState, useEffect } from 'preact/hooks';
+      import { useState, useEffect, useRef } from 'preact/hooks';
       import { html } from 'htm/preact';
 
       const fetchSheet = (param) => new Promise((resolve, reject) => {
@@ -156,6 +194,8 @@
         return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
       };
 
+      const TAB_LABELS = { expenses: 'Expenses', utang: 'Utang', hashtag: 'Hashtag' };
+
       const _now = new Date();
       const defaultMonth = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -169,7 +209,10 @@
         const [result, setResult] = useState(null);
         const [loading, setLoading] = useState(false);
         const [error, setError] = useState(null);
-        const [showMonthPicker, setShowMonthPicker] = useState(false);
+        const [menuOpen, setMenuOpen] = useState(false);
+
+        const menuRef = useRef(null);
+        const monthInputRef = useRef(null);
 
         const cat = (r) => (r.Category && r.Category.trim()) || 'No Category';
 
@@ -198,16 +241,41 @@
 
         useEffect(() => { load(); }, []);
 
+        useEffect(() => {
+          if (!menuOpen) return;
+          const onClick = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+              setMenuOpen(false);
+            }
+          };
+          document.addEventListener('click', onClick);
+          return () => document.removeEventListener('click', onClick);
+        }, [menuOpen]);
+
         const handleMonthChange = (e) => {
           const v = e.target.value;
           if (v) {
             setMonth(v);
-            setShowMonthPicker(false);
             load(v);
           }
         };
 
+        const handleMonthPillClick = () => {
+          const el = monthInputRef.current;
+          if (!el) return;
+          if (typeof el.showPicker === 'function') {
+            el.showPicker();
+          } else {
+            el.focus();
+          }
+        };
+
         const handleRefresh = () => { load(); };
+
+        const selectTab = (next) => {
+          setTab(next);
+          setMenuOpen(false);
+        };
 
         const categories = result
           ? ['All', ...Array.from(new Set(result.rows.map(cat))).sort()]
@@ -275,31 +343,55 @@
 
         return html`
           <div class="top-bar">
-            <div class="tabs">
-              <button class=${`tab-btn ${tab === 'expenses' ? 'active' : ''}`} onClick=${() => setTab('expenses')}>Expenses</button>
-              <button class=${`tab-btn ${tab === 'utang' ? 'active' : ''}`} onClick=${() => setTab('utang')}>Utang</button>
-              <button class=${`tab-btn ${tab === 'hashtag' ? 'active' : ''}`} onClick=${() => setTab('hashtag')}>Hashtag</button>
+            <div class="hamburger-wrap" ref=${menuRef}>
+              <button class="hamburger-btn" onClick=${() => setMenuOpen((s) => !s)}>
+                <span class="hamburger-icon">☰</span>
+                <span class="hamburger-label">${TAB_LABELS[tab]}</span>
+              </button>
+              ${menuOpen && html`
+                <div class="hamburger-menu">
+                  <button class=${`menu-item ${tab === 'expenses' ? 'active' : ''}`} onClick=${() => selectTab('expenses')}>Expenses</button>
+                  <button class=${`menu-item ${tab === 'utang' ? 'active' : ''}`} onClick=${() => selectTab('utang')}>Utang</button>
+                  <button class=${`menu-item ${tab === 'hashtag' ? 'active' : ''}`} onClick=${() => selectTab('hashtag')}>Hashtag</button>
+                </div>
+              `}
             </div>
             <div class="right">
-              <button class="month-pill" onClick=${() => setShowMonthPicker((s) => !s)}>${formatMonth(month)}</button>
+              <button class="month-pill" onClick=${handleMonthPillClick}>${formatMonth(month)}</button>
               <button class="refresh-btn" onClick=${handleRefresh} disabled=${loading}>Refresh</button>
             </div>
           </div>
-          ${showMonthPicker && html`
-            <input
-              class="month-picker"
-              type="month"
-              value=${month}
-              onChange=${handleMonthChange}
-            />
-          `}
+          <input
+            ref=${monthInputRef}
+            class="month-picker"
+            type="month"
+            value=${month}
+            onChange=${handleMonthChange}
+          />
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.8</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.9</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
               <p><strong>Sheet Target:</strong> ${result.sheetName}</p>
-              <p>Loaded ${result.rowLen} | Showing ${filteredRows.length}</p>
+              ${tab === 'expenses' && html`
+                <select class="filter-select" value=${category} onChange=${(e) => setCategory(e.target.value)} disabled=${!result}>
+                  ${categories.map((c) => html`<option value=${c}>${c}</option>`)}
+                </select>
+              `}
+              ${tab === 'utang' && html`
+                <select class="filter-select" value=${utangFilter} onChange=${(e) => setUtangFilter(e.target.value)} disabled=${!result}>
+                  <option value="all">All</option>
+                  <option value="istri">#utangistri</option>
+                  <option value="suami">#utangsuami</option>
+                </select>
+              `}
+              ${tab === 'hashtag' && html`
+                <select class="filter-select" value=${hashtagFilter} onChange=${(e) => setHashtagFilter(e.target.value)} disabled=${!result}>
+                  <option value="All">All</option>
+                  ${hashtags.map((h) => html`<option value=${h}>${h}</option>`)}
+                </select>
+              `}
               ${tab === 'expenses' && html`
                 <div class="category-sums">
                   ${categorySums.map(([label, value]) => html`
@@ -350,36 +442,7 @@
             `}
           </div>
           <div class="bottom-bar">
-            ${tab === 'expenses' && html`
-              <select
-                value=${category}
-                onChange=${(e) => setCategory(e.target.value)}
-                disabled=${!result}
-              >
-                ${categories.map((c) => html`<option value=${c}>${c}</option>`)}
-              </select>
-            `}
-            ${tab === 'utang' && html`
-              <select
-                value=${utangFilter}
-                onChange=${(e) => setUtangFilter(e.target.value)}
-                disabled=${!result}
-              >
-                <option value="all">All</option>
-                <option value="istri">#utangistri</option>
-                <option value="suami">#utangsuami</option>
-              </select>
-            `}
-            ${tab === 'hashtag' && html`
-              <select
-                value=${hashtagFilter}
-                onChange=${(e) => setHashtagFilter(e.target.value)}
-                disabled=${!result}
-              >
-                <option value="All">All</option>
-                ${hashtags.map((h) => html`<option value=${h}>${h}</option>`)}
-              </select>
-            `}
+            ${result && html`<span class="loaded-info">Loaded ${result.rowLen} | Showing ${filteredRows.length}</span>`}
           </div>
         `;
       }
