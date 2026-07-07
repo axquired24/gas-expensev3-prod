@@ -86,10 +86,8 @@ if (isMain) {
   const createRes = await script.projects.deployments.create({
     scriptId,
     requestBody: {
-      deploymentConfig: {
-        versionNumber,
-        description: `${VERSION} (${branch})`,
-      },
+      versionNumber,
+      description: `${VERSION} (${branch})`,
     },
   });
   const deploymentId = createRes.data.deploymentId;
