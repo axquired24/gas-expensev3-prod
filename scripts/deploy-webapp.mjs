@@ -1,15 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { google } from 'googleapis';
 
-// 0. PINNED DEPLOYMENT — do not change without explicit user approval.
-// This is the public web app URL:
-//   https://script.google.com/macros/s/<EXPECTED_DEPLOYMENT_ID>/exec
-// The pipeline only UPDATES this deployment. It will never create a new one
-// (creating would generate a new URL). If this deployment is missing, the
-// script fails loudly instead of silently creating a new one.
+// 0. PINNED DEPLOYMENT (main branch only) — public URL preserved.
 const EXPECTED_DEPLOYMENT_ID = 'AKfycbwgMUrixaicNVmbz7-jjc9vGHC6Ywu6sqTHWxcZi3-R607pPB_k1lgsn30rnidYjU92';
+// Version the main branch is locked to. Non-main branches create fresh versions.
+const LOCKED_VERSION = 9;
 
 // 1. Read version from config.js
 const configSrc = readFileSync('config.js', 'utf8');
@@ -37,43 +34,67 @@ auth.setCredentials({
 
 const script = google.script({ version: 'v1', auth });
 
-// 4. Create new version
-const versionRes = await script.projects.versions.create({
-  scriptId,
-  requestBody: { description: VERSION },
-});
-const versionNumber = versionRes.data.versionNumber;
-console.log(`Created version ${versionNumber} (${VERSION})`);
+// 4. Detect current branch
+const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+const isMain = branch === 'main';
+console.log(`Branch: ${branch}`);
 
-// 5. Find the pinned deployment (refuse to create a new one)
-const list = await script.projects.deployments.list({ scriptId });
-const webDeploy = (list.data.deployments || []).find(
-  (d) => d.deploymentId === EXPECTED_DEPLOYMENT_ID,
-);
-
-if (!webDeploy) {
-  throw new Error(
-    `Pinned deployment ${EXPECTED_DEPLOYMENT_ID} not found in script ${scriptId}. ` +
-    `Refusing to create a new deployment (would change the public URL). ` +
-    `Restore the deployment via the Apps Script editor, or update EXPECTED_DEPLOYMENT_ID in scripts/deploy-webapp.mjs.`
+if (isMain) {
+  // MAIN: lock pinned deployment to v9, never create a new version
+  const list = await script.projects.deployments.list({ scriptId });
+  const webDeploy = (list.data.deployments || []).find(
+    (d) => d.deploymentId === EXPECTED_DEPLOYMENT_ID,
   );
-}
+  if (!webDeploy) {
+    throw new Error(
+      `Pinned deployment ${EXPECTED_DEPLOYMENT_ID} not found. ` +
+      `Refusing to create a new deployment on main (would change the public URL).`,
+    );
+  }
 
-const updateRes = await script.projects.deployments.update({
-  scriptId,
-  deploymentId: webDeploy.deploymentId,
-  requestBody: {
-    deploymentConfig: {
-      versionNumber,
-      description: VERSION,
+  const currentVersion = webDeploy.deploymentConfig?.versionNumber;
+  if (currentVersion !== LOCKED_VERSION) {
+    const updateRes = await script.projects.deployments.update({
+      scriptId,
+      deploymentId: EXPECTED_DEPLOYMENT_ID,
+      requestBody: {
+        deploymentConfig: {
+          versionNumber: LOCKED_VERSION,
+          description: `pinned to v${LOCKED_VERSION} (${VERSION})`,
+        },
+      },
+    });
+    const url = updateRes.data.entryPoints?.find((e) => e.webApp)?.webApp?.url;
+    console.log(`[main] reset ${EXPECTED_DEPLOYMENT_ID} from v${currentVersion} -> v${LOCKED_VERSION}`);
+    console.log(`Web app URL : ${url}`);
+    spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
+  } else {
+    const url = webDeploy.entryPoints?.find((e) => e.webApp)?.webApp?.url;
+    console.log(`[main] already at v${LOCKED_VERSION}, no change`);
+    console.log(`Web app URL : ${url}`);
+    spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
+  }
+} else {
+  // NON-MAIN: create new version + new deployment (new URL per branch)
+  const versionRes = await script.projects.versions.create({
+    scriptId,
+    requestBody: { description: `${VERSION} (${branch})` },
+  });
+  const versionNumber = versionRes.data.versionNumber;
+  console.log(`Created version ${versionNumber} (${VERSION}) on branch ${branch}`);
+
+  const createRes = await script.projects.deployments.create({
+    scriptId,
+    requestBody: {
+      deploymentConfig: {
+        versionNumber,
+        description: `${VERSION} (${branch})`,
+      },
     },
-  },
-});
-
-const deploymentId = updateRes.data.deploymentId;
-const url = updateRes.data.entryPoints?.find((ep) => ep.webApp)?.webApp?.url;
-console.log(`Updated deployment ${deploymentId} to version ${versionNumber} (${VERSION})`);
-console.log(`Web app URL : ${url}`);
-
-// 6. Open URL in default browser
-spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
+  });
+  const deploymentId = createRes.data.deploymentId;
+  const url = createRes.data.entryPoints?.find((e) => e.webApp)?.webApp?.url;
+  console.log(`Created new deployment ${deploymentId} on branch ${branch}`);
+  console.log(`Web app URL : ${url}`);
+  spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
+}

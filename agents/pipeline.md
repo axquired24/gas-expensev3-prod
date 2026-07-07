@@ -21,23 +21,39 @@ npm run deploy
 |---|---|---|
 | `git add .` / `git commit` | git | Records the change locally. |
 | `npx clasp push` | clasp | Uploads every project file (HTML, JS, JSON) to the Apps Script project. |
-| `npm run deploy` | node | Runs `scripts/deploy-webapp.mjs`, which: |
+| `npm run deploy` | node | Runs `scripts/deploy-webapp.mjs`, which branches on the current git branch: |
 
-### `npm run deploy` (detailed)
+### `npm run deploy` — branch behaviour
 
+`scripts/deploy-webapp.mjs` reads the current branch with
+`git rev-parse --abbrev-ref HEAD` and behaves differently per branch.
+
+**On `main` (production):**
+1. Reads `APP_VERSION` from `config.js` via regex (logging only — version is not used).
+2. Reads `scriptId` from `.clasp.json`.
+3. Loads OAuth creds from `~/.clasprc.json` (`tokens.default`).
+4. `script.projects.deployments.list` → find the deployment whose
+   `deploymentId === EXPECTED_DEPLOYMENT_ID` (see §4). Throws if not found.
+5. If current `versionNumber === LOCKED_VERSION` (9): no-op, just logs and opens URL.
+6. Else: `script.projects.deployments.update` with body
+   `{ deploymentConfig: { versionNumber: LOCKED_VERSION, description: "pinned to v9 (...)" } }`.
+   This snaps the pinned deployment back to v9, regardless of what newer versions exist.
+7. Logs deployment state and **web app URL**.
+8. `spawn('open', [url])` — opens the URL in the default browser (macOS).
+
+**On any other branch (preview):**
 1. Reads `APP_VERSION` from `config.js` via regex.
 2. Reads `scriptId` from `.clasp.json`.
 3. Loads OAuth creds from `~/.clasprc.json` (`tokens.default`).
-4. `script.projects.versions.create` — creates a new immutable version of the code, `description = APP_VERSION`.
-5. `script.projects.deployments.list` → find the deployment whose
-   `deploymentId === EXPECTED_DEPLOYMENT_ID` (see §4). Throws if not found.
-6. `script.projects.deployments.update` with body:
-   ```js
-   { deploymentConfig: { versionNumber, description: APP_VERSION } }
-   ```
-   This edits the existing web‑app deployment to point at the new version — same URL, new code.
-7. Logs `Updated deployment <id> to version <n>` and the **web app URL**.
-8. `spawn('open', [url])` — opens the URL in the default browser (macOS).
+4. `script.projects.versions.create` — creates a new immutable version,
+   `description = "${APP_VERSION} (${branch})"`.
+5. `script.projects.deployments.create` with body
+   `{ deploymentConfig: { versionNumber, description: "${APP_VERSION} (${branch})" } }`.
+   This creates a fresh deployment (new URL) for the branch. The pinned main deployment
+   is untouched. Each deploy on a non-main branch adds another deployment — clean up
+   via the GAS editor or a separate `deployments.delete` script.
+6. Logs new deployment id and **web app URL** (differs from main URL).
+7. `spawn('open', [url])` — opens the URL in the default browser (macOS).
 
 ### `postdeploy` (automatic)
 
@@ -54,17 +70,28 @@ Runs immediately after `npm run deploy` and force‑pushes the current commit to
 - `package.json` — `deploy` + `postdeploy` scripts
 - `scripts/deploy-webapp.mjs` — the deploy logic
 
-## 4. Pinned deployment ID
+## 4. Pinned deployment + branch behaviour
 
-The pipeline **only updates** one specific deployment. Creating a new deployment
-would generate a new public URL, which we never want.
+The pipeline branches on `git rev-parse --abbrev-ref HEAD` and behaves
+differently per branch.
 
+**Production URL (frozen on `main`):**
 - `EXPECTED_DEPLOYMENT_ID` is hardcoded at the top of `scripts/deploy-webapp.mjs`
-- The script looks up the deployment by ID, then calls `deployments.update` —
-  same `deploymentId` → same URL, new code
+- `LOCKED_VERSION = 9` is the version the main branch is pinned to
+- On `main`, the script snaps the deployment back to v9 regardless of newer
+  versions; it never creates a new version
+- The public URL is preserved across every `main` deploy
 - If the pinned deployment is missing, the script throws. It **never** silently
-  creates a new one
-- Bumping `EXPECTED_DEPLOYMENT_ID` is a deliberate operation, not an accident
+  creates a new one on main
+
+**Preview URLs (non-main branches):**
+- Each `npm run deploy` on a non-main branch creates a new immutable version
+  and a new deployment (new URL) with description `${APP_VERSION} (${branch})`
+- The pinned `main` deployment is untouched
+- Non-main deployments accumulate — clean up via the GAS editor or a separate
+  `deployments.delete` script
+- Bumping `EXPECTED_DEPLOYMENT_ID` or `LOCKED_VERSION` is a deliberate operation,
+  not an accident
 
 ## 5. Client‑side safeguards against stale data
 
