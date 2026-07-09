@@ -260,6 +260,13 @@
         color: #fff;
         border-bottom-right-radius: 4px;
       }
+      .chat-bubble.clickable {
+        cursor: pointer;
+        border-color: var(--accent);
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .chat-bubble.clickable:hover { background: var(--accent); color: #fff; }
       .chat-bubble.bot {
         align-self: flex-start;
         background: var(--box);
@@ -347,6 +354,10 @@
       .preview-wrap table { min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; width: 100%; }
       .preview-wrap th { background: #232323; color: var(--muted); padding: 8px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
       .preview-wrap td { padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+      .preview-wrap td.amount.neg { background: rgba(255, 107, 107, 0.15); }
+      .preview-wrap td.amount.pos { background: rgba(140, 255, 140, 0.15); }
+      .table-wrap td.amount.neg { background: rgba(255, 107, 107, 0.15); }
+      .table-wrap td.amount.pos { background: rgba(140, 255, 140, 0.15); }
       .preview-wrap tr { cursor: pointer; }
       .preview-wrap tr:hover td { background: #232323; }
       .preview-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 8px 0; }
@@ -805,6 +816,7 @@
                 ...h,
                 { sender: 'user', text: userBubble, ts: Date.now() },
                 { sender: 'bot', text: res.reply, ts: Date.now() },
+                { sender: 'bot', text: 'Check Expenses →', ts: Date.now(), action: 'check-expenses' },
               ]);
               showToast('Saved ' + res.sheetRows + ' rows → ' + res.sheetName);
               setPreviewRows([]);
@@ -863,10 +875,11 @@
 
         let filteredRows = [];
         if (result) {
+          const reversed = [...result.rows].reverse();
           if (tab === 'expenses') {
-            filteredRows = category === 'All' ? result.rows : result.rows.filter((r) => cat(r) === category);
+            filteredRows = category === 'All' ? reversed : reversed.filter((r) => cat(r) === category);
           } else if (tab === 'utang') {
-            const rows = result.rows.filter((r) => (r.Description || '').toLowerCase().includes('#utang'));
+            const rows = reversed.filter((r) => (r.Description || '').toLowerCase().includes('#utang'));
             if (utangFilter === 'istri') {
               filteredRows = rows.filter((r) => (r.Description || '').toLowerCase().includes('#utangistri'));
             } else if (utangFilter === 'suami') {
@@ -876,9 +889,9 @@
             }
           } else if (tab === 'hashtag') {
             if (hashtagFilter === 'All') {
-              filteredRows = result.rows.filter((r) => extractHashtags(r.Description).length > 0);
+              filteredRows = reversed.filter((r) => extractHashtags(r.Description).length > 0);
             } else {
-              filteredRows = result.rows.filter((r) =>
+              filteredRows = reversed.filter((r) =>
                 (r.Description || '').toLowerCase().includes(hashtagFilter.toLowerCase())
               );
             }
@@ -919,7 +932,7 @@
           </div>
           ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.16</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.17</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
@@ -980,7 +993,7 @@
                       ? html`<tr><td colspan="4">No data</td></tr>`
                       : filteredRows.map((r) => html`
                           <tr>
-                            <td class="amount">${formatAmount(r.Amount)}</td>
+                            <td class=${`amount ${r.Amount < 0 ? 'neg' : r.Amount > 0 ? 'pos' : ''}`}>${formatAmount(r.Amount)}</td>
                             <td>${r.Date}</td>
                             <td>${r.Description}</td>
                             <td>${cat(r)}</td>
@@ -998,7 +1011,10 @@
                 ? html`<div class="chat-empty-hint">Type expense like:<br/>-31k makan #ngantor #utangsuami<br/>-40k ikan #utangistri<br/>Then ✈ for preview.</div>`
                 : html`
                   <div class="chat-history">
-                    ${chatHistory.map((b) => html`<div class=${`chat-bubble ${b.sender}`}>${b.text}</div>`)}
+                    ${chatHistory.map((b) => b.action === 'check-expenses'
+                  ? html`<div class="chat-bubble bot clickable" onClick=${() => selectTab('expenses')}>${b.text}</div>`
+                  : html`<div class=${`chat-bubble ${b.sender}`}>${b.text}</div>`
+                )}
                   </div>
                 `
               }
@@ -1010,7 +1026,7 @@
                       ${previewRows.map((r, i) => html`
                         <tr onClick=${() => openEditRow(i)}>
                           <td>${r.date}</td>
-                          <td>${formatRupiah(r.amount)}</td>
+                          <td class=${`amount ${r.amount < 0 ? 'neg' : r.amount > 0 ? 'pos' : ''}`}>${formatRupiah(r.amount)}</td>
                           <td>${r.categoryTag || '—'}</td>
                           <td>${r.utangTag || '—'}</td>
                         </tr>
