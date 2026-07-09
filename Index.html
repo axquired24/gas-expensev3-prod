@@ -55,9 +55,9 @@
         position: sticky;
         left: 0;
         background: var(--box);
-        z-index: 1;
+        z-index: 2;
         text-align: right;
-        box-shadow: 1px 0 0 var(--border);
+        box-shadow: 2px 0 4px rgba(0,0,0,0.4);
       }
       th.amount { background: #232323; }
       .error-msg { color: var(--error); font-weight: bold; }
@@ -354,10 +354,10 @@
       .preview-wrap table { min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; width: 100%; }
       .preview-wrap th { background: #232323; color: var(--muted); padding: 8px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
       .preview-wrap td { padding: 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-      .preview-wrap td.amount.neg { background: rgba(255, 107, 107, 0.15); }
-      .preview-wrap td.amount.pos { background: rgba(140, 255, 140, 0.15); }
-      .table-wrap td.amount.neg { background: rgba(255, 107, 107, 0.15); }
-      .table-wrap td.amount.pos { background: rgba(140, 255, 140, 0.15); }
+      .preview-wrap td.amount.neg { background: #3a2222; }
+      .preview-wrap td.amount.pos { background: #1a3322; }
+      .table-wrap td.amount.neg { background: #3a2222; }
+      .table-wrap td.amount.pos { background: #1a3322; }
       .preview-wrap tr { cursor: pointer; }
       .preview-wrap tr:hover td { background: #232323; }
       .preview-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 8px 0; }
@@ -932,7 +932,7 @@
           </div>
           ${tab !== 'add-expense' && html`
           <div class="box">
-            <h2>Web App Dashboard <span class="version-inline">v1.1.17</span></h2>
+            <h2>Web App Dashboard <span class="version-inline">v1.1.18</span></h2>
             ${error && html`<span class="error-msg">Error: ${error}</span>`}
             ${loading && html`<p>Fetching data for ${month.replace('-', '')}...</p>`}
             ${result && html`
